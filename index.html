@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DPL 2026 Team Evaluation</title>
+<meta name="description" content="IPL 2023–24 team evaluation on a context-adjusted runs scale (RAE, DAR, Impact), powered by the Kaggle notebook's dashboard_data.json.">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f4f1; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --mute:#7a7975;
+  --line:#e4e3df; --grid:#eeede9; --zero:#8d8c87;
+  --accent:#2a78d6; --accent2:#eb6834; --pos:#2a78d6; --neg:#e34948; --grey:#b3b2ad;
+  --wash:#eaf2fc; --warnwash:#fdeceb; --hover:#f0efec;
+}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme:dark;
+    --bg:#121211; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --mute:#8f8e86;
+    --line:#34332f; --grid:#262623; --zero:#77766f;
+    --accent:#3987e5; --accent2:#d95926; --pos:#3987e5; --neg:#e66767; --grey:#5c5b56;
+    --wash:#1b2838; --warnwash:#3a2020; --hover:#242422;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121211; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --mute:#8f8e86;
+  --line:#34332f; --grid:#262623; --zero:#77766f;
+  --accent:#3987e5; --accent2:#d95926; --pos:#3987e5; --neg:#e66767; --grey:#5c5b56;
+  --wash:#1b2838; --warnwash:#3a2020; --hover:#242422;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--surface);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+.brand{font-weight:700;font-size:15px;white-space:nowrap}
+.brand small{display:block;font-weight:400;font-size:11.5px;color:var(--mute)}
+.teams{display:flex;gap:4px;flex-wrap:wrap}
+.teams button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:5px 9px;font:600 12px/1 inherit;cursor:pointer}
+.teams button:hover{border-color:var(--accent)}
+.teams button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.ctrls{margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--ink2)}
+.ctrls label{display:flex;gap:5px;align-items:center;white-space:nowrap}
+.ctrls input,.ctrls select{padding:3px 6px;border:1px solid var(--line);border-radius:5px;font:inherit;background:var(--surface);color:var(--ink)}
+.ctrls input{width:56px}
+.ctrls select:disabled{opacity:.45}
+#theme{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 8px;cursor:pointer;font:inherit}
+main{display:flex;align-items:flex-start;gap:16px;padding:16px;max-width:1480px;margin:0 auto}
+nav{width:236px;flex:0 0 236px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:7px;position:sticky;top:72px}
+nav .grp{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--mute);padding:9px 9px 4px;font-weight:700}
+nav a{display:block;padding:6px 9px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:12.5px;cursor:pointer}
+nav a:hover{background:var(--hover)}
+nav a.on{background:var(--accent);color:#fff;font-weight:600}
+nav a b{display:inline-block;width:24px;color:var(--mute);font-size:11px}
+nav a.on b{color:#dce9fa}
+section{flex:1;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:16px 18px;margin-bottom:14px}
+h1{font-size:19px;margin:0 0 3px}
+h2{font-size:14.5px;margin:0 0 8px}
+h3{font-size:13px;margin:14px 0 4px}
+.sub{color:var(--ink2);font-size:12.5px;margin:0}
+.finding{border-left:3px solid var(--accent);background:var(--wash);padding:10px 14px;border-radius:0 6px 6px 0;margin:0 0 14px;font-size:13.5px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+.stat .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mute);font-weight:700}
+.stat .v{font-size:22px;font-weight:700;margin:3px 0 1px;letter-spacing:-.4px}
+.stat .n{font-size:11.5px;color:var(--ink2)}
+.wrap{overflow:auto;max-height:540px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;letter-spacing:.2px;color:var(--mute);font-weight:700;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--surface)}
+th:hover{color:var(--ink)}
+th.l,td.l{text-align:left}
+td.wrapc{white-space:normal;min-width:260px}
+tbody tr:hover{background:var(--hover)}
+tr.me td{background:var(--wash);font-weight:600}
+.neg{color:var(--neg)}
+.note{font-size:12px;color:var(--ink2);margin-top:9px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.prose p{margin:0 0 10px;max-width:880px}
+.prose .eq{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;background:var(--hover);border-radius:6px;padding:8px 12px;margin:6px 0 12px;overflow-x:auto;white-space:pre}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:9px;background:var(--hover);color:var(--ink2);margin-left:6px;vertical-align:middle}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink2);margin:2px 0 6px}
+.legend i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.legend i.ln{height:2px;vertical-align:3px}
+svg{display:block;width:100%;height:auto;font:11px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:visible}
+svg text{fill:var(--ink2)}
+svg .ttl{fill:var(--ink);font-size:12.5px;font-weight:700}
+svg .tick{fill:var(--mute);font-size:10.5px}
+svg .lab{fill:var(--ink);font-size:10.5px}
+svg .gl{stroke:var(--grid)}
+svg .zl{stroke:var(--zero);stroke-width:1}
+svg [data-tip]{cursor:default}
+svg [data-tip]:hover{filter:brightness(1.12)}
+#tip{position:fixed;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:7px;box-shadow:0 4px 18px rgba(0,0,0,.14);padding:7px 10px;font-size:12px;z-index:99;display:none;max-width:280px}
+#tip .tv{font-weight:700;font-size:13px}
+#tip .tl{color:var(--ink2)}
+.empty{color:var(--ink2);padding:14px 0}
+#loading{padding:60px 20px;text-align:center;color:var(--ink2)}
+@media(max-width:1080px){
+  .row2{grid-template-columns:1fr}
+  nav{position:static;width:100%;flex:auto}
+  main{flex-direction:column;align-items:stretch;padding:12px}
+  section{width:100%}
+  .ctrls{margin-left:0;width:100%}
+}
+@media(max-width:560px){
+  header{padding:8px 12px;gap:10px;position:static}
+  .card{padding:13px 14px}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">DPL 2026 · Team Evaluation<small id="brandsub">IPL 2023 + 2024 · RAE / DAR / Impact</small></div>
+  <div class="teams" id="teams"></div>
+  <div class="ctrls">
+    <label>Season <select id="season"><option value="both">both</option><option value="2023">2023</option><option value="2024">2024</option></select></label>
+    <label>Min balls bat <input type="number" id="minBat" value="60" min="0" step="10"></label>
+    <label>Min balls bowl <input type="number" id="minBowl" value="90" min="0" step="10"></label>
+    <button id="theme" title="Toggle light / dark">◐</button>
+  </div>
+</header>
+<main>
+  <nav id="nav"></nav>
+  <section id="view"><div id="loading">Loading <code>data/dashboard_data.json</code>…</div></section>
+</main>
+<div id="tip"></div>
+<script>
+"use strict";
+/* The dashboard computes nothing. Every number is read from data/dashboard_data.json,
+   which the Kaggle notebook (section 09) writes. */
+let D, T, TEAMS;
+const PHASES = ["Powerplay", "Middle", "Death"];
+const state = { team: null, q: "ov", season: "both", minBat: 60, minBowl: 90, sort: {} };
+
+/* ------------------------------------------------------------ utils */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const num = v => (v === null || v === undefined || v === "" || (typeof v === "number" && !isFinite(v))) ? null : +v;
+function f(v, d = 2, sign = false) {
+  const x = num(v); if (x === null) return "–";
+  const s = Math.abs(x).toFixed(d), z = +s === 0;
+  return (x < 0 && !z ? "−" : (sign && x > 0 && !z ? "+" : "")) + s;
+}
+const pct = v => num(v) === null ? "–" : f(v, 0) + "%";
+const ord = n => { n = Math.round(n); const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+const byTeam = (arr, t = state.team) => arr.filter(r => r.team === t);
+const one = (arr, t = state.team) => byTeam(arr, t)[0] || {};
+const ordBy = (a, list, k) => a.slice().sort((x, y) => list.indexOf(x[k]) - list.indexOf(y[k]));
+const find = html => `<div class="finding">${html}</div>`;
+const tname = t => (D.teams[t] || {}).name || t;
+const readHash = () => { const h = new URLSearchParams(location.hash.slice(1)); if (TEAMS.includes(h.get("t"))) state.team = h.get("t"); if (QS.some(x => x.id === h.get("q"))) state.q = h.get("q"); };
+const sgnCol = v => num(v) === null ? "var(--grey)" : (v >= 0 ? "var(--pos)" : "var(--neg)");
+const tip = (...parts) => esc(parts.join("|"));
+
+/* ------------------------------------------------------------ chart primitives (SVG) */
+const lin = (d0, d1, r0, r1) => v => r0 + ((v - d0) / ((d1 - d0) || 1)) * (r1 - r0);
+function extent(vals, pad = 0.1, zero = true) {
+  let v = vals.filter(x => x !== null && isFinite(x));
+  if (!v.length) return [0, 1];
+  let lo = Math.min(...v), hi = Math.max(...v);
+  if (zero) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const p = (hi - lo) * pad; return [lo - (lo < 0 || !zero ? p : 0), hi + p];
+}
+function ticks(lo, hi, n = 5) {
+  const raw = (hi - lo) / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const st = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw) || mag * 10;
+  const out = []; for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) out.push(+v.toFixed(10));
+  return out;
+}
+const tfmt = v => Math.abs(v) >= 100 ? v.toFixed(0) : (Math.abs(v) >= 10 ? v.toFixed(0) : +v.toFixed(2) + "");
+function rbar(x, y, w, h, fill, r = 4, dir = "right", extra = "") {
+  /* a bar with rounded data-end (4px) anchored square at the baseline */
+  w = Math.max(w, 0.01); h = Math.max(h, 0.01); r = Math.min(r, w / 2, h / 2);
+  let d;
+  if (dir === "right") d = `M${x},${y}h${w - r}a${r},${r} 0 0 1 ${r},${r}v${h - 2 * r}a${r},${r} 0 0 1 -${r},${r}h-${w - r}z`;
+  else if (dir === "left") d = `M${x + w},${y}h-${w - r}a${r},${r} 0 0 0 -${r},${r}v${h - 2 * r}a${r},${r} 0 0 0 ${r},${r}h${w - r}z`;
+  else if (dir === "up") d = `M${x},${y + h}v-${h - r}a${r},${r} 0 0 1 ${r},-${r}h${w - 2 * r}a${r},${r} 0 0 1 ${r},${r}v${h - r}z`;
+  else d = `M${x},${y}v${h - r}a${r},${r} 0 0 0 ${r},${r}h${w - 2 * r}a${r},${r} 0 0 0 ${r},-${r}v-${h - r}z`;
+  return `<path d="${d}" fill="${fill}" ${extra}/>`;
+}
+
+/* horizontal bars, signed, optional CI whiskers */
+function hbar(items, o = {}) {
+  const W = o.w || 560, ml = o.ml || 130, mr = 64, bh = o.bh || 16, gap = 6, mt = o.title ? 26 : 8, mb = 30;
+  const H = mt + items.length * (bh + gap) + mb;
+  const vals = items.flatMap(d => [d.value, ...(d.err || [])]);
+  const [lo, hi] = o.domain || extent(vals, 0.08);
+  const x = lin(lo, hi, ml, W - mr), x0 = x(0);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title || "bar chart")}" style="max-width:${W}px">`;
+  if (o.title) s += `<text class="ttl" x="0" y="14">${esc(o.title)}</text>`;
+  for (const t of ticks(lo, hi)) {
+    s += `<line class="gl" x1="${x(t)}" x2="${x(t)}" y1="${mt - 4}" y2="${H - mb + 2}"/>`;
+    s += `<text class="tick" x="${x(t)}" y="${H - mb + 15}" text-anchor="middle">${tfmt(t)}</text>`;
+  }
+  if (o.xlab) s += `<text class="tick" x="${(ml + W - mr) / 2}" y="${H - 2}" text-anchor="middle">${esc(o.xlab)}</text>`;
+  items.forEach((d, i) => {
+    const y = mt + i * (bh + gap), v = num(d.value);
+    s += `<text class="lab" x="${ml - 8}" y="${y + bh / 2 + 4}" text-anchor="end" ${d.bold ? 'font-weight="700"' : ""}>${esc(d.label)}</text>`;
+    if (v === null) return;
+    const xa = x(Math.min(0, v)), w = Math.abs(x(v) - x0);
+    const t = tip(d.tipv || f(v, o.d ?? 2, o.sign), d.label + (d.tipl ? " · " + d.tipl : ""));
+    s += `<rect x="${ml - 4}" y="${y - 2}" width="${W - mr - ml + 8}" height="${bh + 4}" fill="transparent" data-tip="${t}"/>`;
+    s += rbar(xa, y, w, bh, d.color || sgnCol(v), 4, v >= 0 ? "right" : "left", `data-tip="${t}"`);
+    if (d.err && num(d.err[0]) !== null) {
+      const [a, b] = d.err.map(x);
+      s += `<line x1="${a}" x2="${b}" y1="${y + bh / 2}" y2="${y + bh / 2}" stroke="var(--ink)" stroke-width="1.2" opacity=".55"/>`;
+      s += `<line x1="${a}" x2="${a}" y1="${y + 4}" y2="${y + bh - 4}" stroke="var(--ink)" stroke-width="1.2" opacity=".55"/>`;
+      s += `<line x1="${b}" x2="${b}" y1="${y + 4}" y2="${y + bh - 4}" stroke="var(--ink)" stroke-width="1.2" opacity=".55"/>`;
+    }
+    /* positive labels sit past the bar end; negative ones sit just right of zero so they never run into the names */
+    const lx = v >= 0 ? Math.max(x(v), d.err ? x(d.err[1]) : 0) + 6 : x0 + 6;
+    if (o.labels !== false)
+      s += `<text class="lab" x="${lx}" y="${y + bh / 2 + 4}" text-anchor="start">${esc(d.note || f(v, o.d ?? 1, o.sign))}</text>`;
+  });
+  s += `<line class="zl" x1="${x0}" x2="${x0}" y1="${mt - 4}" y2="${H - mb + 2}"/>`;
+  return s + "</svg>";
+}
+
+/* grouped vertical bars: cats on x, series side by side */
+function vbars(cats, series, o = {}) {
+  const W = o.w || 520, H = o.h || 250, ml = 46, mr = 10, mt = o.title ? 28 : 10, mb = 30;
+  const vals = series.flatMap(s => s.values);
+  const [lo, hi] = extent(vals, 0.12);
+  const y = lin(lo, hi, H - mb, mt), y0 = y(0);
+  const cw = (W - ml - mr) / cats.length, bw = Math.min(34, (cw - 16) / series.length - 2);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title || "bar chart")}" style="max-width:${W}px">`;
+  if (o.title) s += `<text class="ttl" x="0" y="14">${esc(o.title)}</text>`;
+  for (const t of ticks(lo, hi)) {
+    s += `<line class="gl" x1="${ml}" x2="${W - mr}" y1="${y(t)}" y2="${y(t)}"/>`;
+    s += `<text class="tick" x="${ml - 6}" y="${y(t) + 3.5}" text-anchor="end">${tfmt(t)}</text>`;
+  }
+  if (o.ylab) s += `<text class="tick" transform="translate(10,${(mt + H - mb) / 2}) rotate(-90)" text-anchor="middle">${esc(o.ylab)}</text>`;
+  cats.forEach((c, i) => {
+    const cx = ml + cw * i + cw / 2, start = cx - (series.length * (bw + 2) - 2) / 2;
+    s += `<text class="lab" x="${cx}" y="${H - mb + 16}" text-anchor="middle">${esc(c)}</text>`;
+    series.forEach((se, j) => {
+      const v = num(se.values[i]); if (v === null) return;
+      const xa = start + j * (bw + 2), ya = y(Math.max(0, v)), h = Math.abs(y(v) - y0);
+      const t = tip(f(v, o.d ?? 2, o.sign), `${se.name} · ${c}`);
+      s += rbar(xa, ya, bw, h, se.color, 4, v >= 0 ? "up" : "down", `data-tip="${t}"`);
+      if (o.labels) s += `<text class="lab" x="${xa + bw / 2}" y="${v >= 0 ? ya - 4 : y(v) + 12}" text-anchor="middle">${f(v, o.d ?? 1, o.sign)}</text>`;
+    });
+  });
+  s += `<line class="zl" x1="${ml}" x2="${W - mr}" y1="${y0}" y2="${y0}"/>`;
+  return s + "</svg>";
+}
+
+/* lines over categorical x, with crosshair tooltip */
+let LINE_ID = 0;
+function lines(cats, series, o = {}) {
+  const W = o.w || 520, H = o.h || 250, ml = 50, mr = 12, mt = o.title ? 28 : 10, mb = 32;
+  const [lo, hi] = extent(series.flatMap(s => s.values), 0.12, o.zero !== false);
+  const x = i => ml + (W - ml - mr) * (cats.length === 1 ? 0.5 : i / (cats.length - 1));
+  const y = lin(lo, hi, H - mb, mt), id = "ln" + (LINE_ID++);
+  let s = `<svg viewBox="0 0 ${W} ${H}" id="${id}" role="img" aria-label="${esc(o.title || "line chart")}" style="max-width:${W}px">`;
+  if (o.title) s += `<text class="ttl" x="0" y="14">${esc(o.title)}</text>`;
+  for (const t of ticks(lo, hi)) {
+    s += `<line class="gl" x1="${ml}" x2="${W - mr}" y1="${y(t)}" y2="${y(t)}"/>`;
+    s += `<text class="tick" x="${ml - 6}" y="${y(t) + 3.5}" text-anchor="end">${tfmt(t)}</text>`;
+  }
+  if (lo < 0 && hi > 0) s += `<line class="zl" x1="${ml}" x2="${W - mr}" y1="${y(0)}" y2="${y(0)}"/>`;
+  const step = Math.ceil(cats.length / 10);
+  cats.forEach((c, i) => { if (i % step === 0 || i === cats.length - 1) s += `<text class="tick" x="${x(i)}" y="${H - mb + 15}" text-anchor="middle">${esc(c)}</text>`; });
+  if (o.xlab) s += `<text class="tick" x="${(ml + W - mr) / 2}" y="${H - 2}" text-anchor="middle">${esc(o.xlab)}</text>`;
+  if (o.ylab) s += `<text class="tick" transform="translate(10,${(mt + H - mb) / 2}) rotate(-90)" text-anchor="middle">${esc(o.ylab)}</text>`;
+  series.forEach(se => {
+    const pts = se.values.map((v, i) => num(v) === null ? null : [x(i), y(v)]).filter(Boolean);
+    s += `<polyline fill="none" stroke="${se.color}" stroke-width="2" ${se.dash ? 'stroke-dasharray="5 4"' : ""} points="${pts.map(p => p.join(",")).join(" ")}"/>`;
+    if (cats.length <= 12) pts.forEach(p => s += `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${se.color}" stroke="var(--surface)" stroke-width="2"/>`);
+  });
+  const payload = esc(JSON.stringify({ cats, series: series.map(s => ({ n: s.name, v: s.values })), d: o.d ?? 2 }));
+  s += `<line class="xh" x1="0" x2="0" y1="${mt}" y2="${H - mb}" stroke="var(--zero)" stroke-width="1" style="display:none"/>`;
+  s += `<rect class="xhit" x="${ml}" y="${mt}" width="${W - ml - mr}" height="${H - mb - mt}" fill="transparent" data-lines="${payload}" data-ml="${ml}" data-w="${W - ml - mr}" data-vw="${W}"/>`;
+  return s + "</svg>";
+}
+
+/* scatter facets: [{name, pts:[{x,y,label,color,r,tip}]}] */
+function facets(panels, o = {}) {
+  const n = panels.length, cols = o.cols || n, rows = Math.ceil(n / cols);
+  const pw = o.pw || 260, ph = o.ph || 220, gx = 22, gy = 30, ml = 40, mb = 34, mt = o.title ? 30 : 8;
+  const W = ml + cols * pw + (cols - 1) * gx, H = mt + rows * (ph + gy) + mb - gy;
+  const all = panels.flatMap(p => p.pts);
+  const [xl, xh] = o.xdom || extent(all.map(p => p.x), 0.12);
+  const [yl, yh] = o.ydom || extent(all.map(p => p.y), 0.12);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title || "scatter")}" style="max-width:${W}px">`;
+  if (o.title) s += `<text class="ttl" x="0" y="14">${esc(o.title)}</text>`;
+  panels.forEach((p, k) => {
+    const c = k % cols, r = Math.floor(k / cols);
+    const ox = ml + c * (pw + gx), oy = mt + r * (ph + gy);
+    const x = lin(xl, xh, ox, ox + pw), y = lin(yl, yh, oy + ph, oy + 18);
+    s += `<text class="lab" x="${ox}" y="${oy + 10}" font-weight="700">${esc(p.name)}</text>`;
+    if (p.sub) s += `<text class="tick" x="${ox + pw}" y="${oy + 10}" text-anchor="end">${esc(p.sub)}</text>`;
+    for (const t of ticks(xl, xh, 4)) { s += `<line class="gl" x1="${x(t)}" x2="${x(t)}" y1="${oy + 18}" y2="${oy + ph}"/><text class="tick" x="${x(t)}" y="${oy + ph + 13}" text-anchor="middle">${tfmt(t)}</text>`; }
+    for (const t of ticks(yl, yh, 4)) { s += `<line class="gl" x1="${ox}" x2="${ox + pw}" y1="${y(t)}" y2="${y(t)}"/>${c === 0 ? `<text class="tick" x="${ox - 6}" y="${y(t) + 3.5}" text-anchor="end">${tfmt(t)}</text>` : ""}`; }
+    if (xl < 0 && xh > 0) s += `<line class="zl" x1="${x(0)}" x2="${x(0)}" y1="${oy + 18}" y2="${oy + ph}"/>`;
+    if (yl < 0 && yh > 0) s += `<line class="zl" x1="${ox}" x2="${ox + pw}" y1="${y(0)}" y2="${y(0)}"/>`;
+    const pts = p.pts.slice().sort((a, b) => (a.front ? 1 : 0) - (b.front ? 1 : 0));
+    pts.forEach(q => s += `<circle cx="${x(q.x)}" cy="${y(q.y)}" r="${q.r || 5}" fill="${q.color}" stroke="var(--surface)" stroke-width="2"/>`);
+    /* selective direct labels: front marks first, then the rest only where they do not collide */
+    const placed = [];
+    pts.slice().sort((a, b) => (b.front ? 1 : 0) - (a.front ? 1 : 0)).forEach(q => {
+      if (!q.label) return;
+      const cx = x(q.x), cy = y(q.y), rr = q.r || 5, wlab = q.label.length * 6 + 4;
+      const right = cx + rr + 3 + wlab <= ox + pw + 4;
+      const bx = right ? cx + rr + 3 : cx - rr - 3 - wlab;
+      const box = [bx, cy - 7, bx + wlab, cy + 6];
+      const hit = placed.some(b => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]))
+        || pts.some(o2 => o2 !== q && Math.abs(x(o2.x) - (box[0] + box[2]) / 2) < wlab / 2 && Math.abs(y(o2.y) - cy) < 6);
+      if (hit && !q.front) return;
+      placed.push(box);
+      s += `<text class="${q.front ? "lab" : "tick"}" x="${right ? box[0] : box[2]}" y="${cy + 3.5}" text-anchor="${right ? "start" : "end"}" ${q.front ? 'font-weight="700"' : ""}>${esc(q.label)}</text>`;
+    });
+    pts.forEach(q => s += `<circle cx="${x(q.x)}" cy="${y(q.y)}" r="12" fill="transparent" data-tip="${esc(q.tip || "")}"/>`);
+  });
+  if (o.xlab) s += `<text class="tick" x="${ml + (W - ml) / 2}" y="${H - 4}" text-anchor="middle">${esc(o.xlab)}</text>`;
+  if (o.ylab) s += `<text class="tick" transform="translate(10,${mt + (H - mt - mb) / 2}) rotate(-90)" text-anchor="middle">${esc(o.ylab)}</text>`;
+  return s + "</svg>";
+}
+const legend = items => `<div class="legend">${items.map(i => `<span><i class="${i.line ? "ln" : ""}" style="background:${i.color}"></i>${esc(i.name)}</span>`).join("")}</div>`;
+
+/* sortable table */
+function tbl(id, cols, rs, o = {}) {
+  const st = state.sort[id] || { k: o.sort || cols[0].k, d: o.asc ? 1 : -1 };
+  const data = rs.slice().sort((a, b) => {
+    const x = a[st.k], y = b[st.k];
+    if (typeof x === "string" || typeof y === "string") return st.d * String(x ?? "").localeCompare(String(y ?? ""));
+    return st.d * ((num(x) ?? -1e18) - (num(y) ?? -1e18));
+  });
+  const head = cols.map(c => `<th class="${c.l ? "l" : ""}" data-t="${id}" data-k="${c.k}">${esc(c.t)}${st.k === c.k ? (st.d > 0 ? " ▲" : " ▼") : ""}</th>`).join("");
+  const body = data.map(r => `<tr class="${o.me && o.me(r) ? "me" : ""}">` + cols.map(c => {
+    const v = r[c.k];
+    if (c.l || typeof v === "string" || typeof v === "boolean") return `<td class="${c.l ? "l" : ""} ${c.wrap ? "wrapc" : ""}">${c.fmt ? c.fmt(v, r) : esc(v === true ? "yes" : v === false ? "no" : v)}</td>`;
+    const neg = c.sign && num(v) !== null && v < 0;
+    return `<td class="${neg ? "neg" : ""}">${c.fmt ? c.fmt(v, r) : f(v, c.d ?? 2, c.sign)}</td>`;
+  }).join("") + "</tr>").join("");
+  const count = o.count !== undefined && o.count > data.length ? `<div class="note">${data.length} shown of ${o.count}; the rest are below the minimum-balls filter.</div>` : "";
+  return `<div class="wrap"><table><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td class="l" colspan="${cols.length}">No rows.</td></tr>`}</tbody></table></div>${count}`;
+}
+const card = (k, v, n) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${n}</div></div>`;
+
+/* ------------------------------------------------------------ panels */
+function ovPanel() {
+  const s = one(T.team_summary), sel = D.selection;
+  const cards = [
+    card("Final place", `${ord(s.pos_2023)} → ${ord(s.pos_2024)}`, `${s.pts_2023} → ${s.pts_2024} points`),
+    card("Impact per match", `${f(s.impact_2023, 1, true)} → ${f(s.impact_2024, 1, true)}`, "batting + bowling, runs above an average side"),
+    card("Powerplay swing", f(s.swing_powerplay, 1, true), "Impact runs a match, 2023 → 2024"),
+    card("Middle swing", f(s.swing_middle, 1, true), "Impact runs a match, 2023 → 2024"),
+    card("Death swing", f(s.swing_death, 1, true), "Impact runs a match, 2023 → 2024"),
+    card("Top batter", esc(s.top_batter || "–"), `${f(s.top_batter_impact, 1, true)} Impact, both seasons`),
+    card("Top bowler", esc(s.top_bowler || "–"), `${f(s.top_bowler_impact, 1, true)} Impact, both seasons`),
+  ].join("");
+  const cols = [{ k: "team", t: "Team", l: 1 }, { k: "pos_2023", t: "Place 23", d: 0 }, { k: "pos_2024", t: "Place 24", d: 0 },
+    { k: "impact_2023", t: "Impact/m 23", d: 1, sign: 1 }, { k: "impact_2024", t: "Impact/m 24", d: 1, sign: 1 },
+    { k: "swing_powerplay", t: "PP swing", d: 1, sign: 1 }, { k: "swing_middle", t: "Mid swing", d: 1, sign: 1 },
+    { k: "swing_death", t: "Death swing", d: 1, sign: 1 }, { k: "swing_total", t: "Total swing", d: 1, sign: 1 },
+    { k: "top_batter", t: "Top batter", l: 1 }, { k: "top_bowler", t: "Top bowler", l: 1 }];
+  const ch = sel.chosen, ax = sel.axes.find(a => a.phase === sel.axis);
+  const chRow = sel.rows.find(r => r.team === ch && r.phase === sel.axis);
+  return `<div class="card"><h1>${esc(tname(state.team))}</h1>
+    <p class="sub">Every number below is measured in <b>runs above what an average player would have produced in the same situation</b>,
+    so batting and bowling, and powerplay and death, share one scale. Two seasons, ${D.meta.matches} matches, ${D.meta.legal_balls.toLocaleString()} legal balls.</p></div>`
+    + find(`The selection rule picks <b>${esc(tname(ch))}</b>: the ${esc(sel.axis.toLowerCase())} is the phase whose 2023→24 change tracks the
+      league table most closely (ρ = ${f(ax.rho, 2)}), and ${esc(ch)} moved furthest along it, <b>${f(chRow.swing, 1, true)} Impact runs a match</b>
+      [${f(chRow.swing_lo, 1, true)}, ${f(chRow.swing_hi, 1, true)}]. See <a href="#" data-go="sel">Selection</a>.`)
+    + `<div class="cards" style="margin-bottom:14px">${cards}</div>
+    <div class="card"><h2>All ten teams</h2>${tbl("ov", cols, T.team_summary, { sort: "swing_total", me: r => r.team === state.team })}
+    <div class="note">Impact/m is batting plus bowling Impact per match played. Swing is 2024 minus 2023. Place is the final placing (playoff result for the top four).</div></div>
+    <div class="card"><h2>Standings, rebuilt from the balls</h2>${standingsTbl()}
+    <div class="note">Points and net run rate are rebuilt from the delivery data and match the official IPL tables exactly (the notebook asserts it).
+    The three 2024 washouts, which have no deliveries, are added for points only.</div></div>`;
+}
+function standingsTbl() {
+  const rs = T.team_summary.map(s => {
+    const a = T.standings.find(r => r.team === s.team && r.season === 2023), b = T.standings.find(r => r.team === s.team && r.season === 2024);
+    return { team: s.team, p23: a.Pts, n23: a.NRR, l23: a.league_pos, f23: a.final_pos, p24: b.Pts, n24: b.NRR, l24: b.league_pos, f24: b.final_pos };
+  });
+  return tbl("st", [{ k: "team", t: "Team", l: 1 }, { k: "p23", t: "Pts 23", d: 0 }, { k: "n23", t: "NRR 23", d: 3, sign: 1 },
+    { k: "l23", t: "League 23", d: 0 }, { k: "f23", t: "Final 23", d: 0 }, { k: "p24", t: "Pts 24", d: 0 }, { k: "n24", t: "NRR 24", d: 3, sign: 1 },
+    { k: "l24", t: "League 24", d: 0 }, { k: "f24", t: "Final 24", d: 0 }], rs, { sort: "f24", asc: 1, me: r => r.team === state.team });
+}
+
+function selPanel() {
+  const sel = D.selection, rows = sel.rows, ax = sel.axis;
+  const phasesAll = [...PHASES, "Total"];
+  const panels = phasesAll.map(p => {
+    const a = sel.axes.find(z => z.phase === p);
+    return {
+      name: p, sub: `ρ = ${f(a.rho, 2)} · p = ${f(a.p_perm, 2)}`,
+      pts: rows.filter(r => r.phase === p).map(r => ({
+        x: r.swing, y: r.places_gained, label: r.team, front: r.team === state.team,
+        color: r.team === state.team ? "var(--accent)" : "var(--grey)", r: r.team === state.team ? 6.5 : 5,
+        tip: tip(`${f(r.swing, 1, true)} runs a match`, `${r.team} · ${p} · places gained ${f(r.places_gained, 0, true)}`)
+      }))
+    };
+  });
+  const ranked = rows.filter(r => r.phase === ax).sort((a, b) => b.swing - a.swing);
+  const bars = ranked.map(r => ({
+    label: r.team, value: r.swing, err: [r.swing_lo, r.swing_hi], bold: r.team === state.team,
+    color: r.team === state.team ? "var(--accent)" : "var(--grey)", tipl: `95% interval ${f(r.swing_lo, 1, true)} to ${f(r.swing_hi, 1, true)}`
+  }));
+  const chRow = ranked[0], ru = ranked[1], a = sel.axes.find(z => z.phase === ax), tot = sel.axes.find(z => z.phase === "Total");
+  const cols = [{ k: "team", t: "Team", l: 1 }, { k: "pos_2023", t: "Place 23", d: 0 }, { k: "pos_2024", t: "Place 24", d: 0 },
+    { k: "places_gained", t: "Gained", d: 0, sign: 1 }, { k: "bat_2023", t: "Bat 23", d: 1, sign: 1 }, { k: "bat_2024", t: "Bat 24", d: 1, sign: 1 },
+    { k: "bowl_2023", t: "Bowl 23", d: 1, sign: 1 }, { k: "bowl_2024", t: "Bowl 24", d: 1, sign: 1 },
+    { k: "bat_swing", t: "Bat swing", d: 1, sign: 1 }, { k: "bowl_swing", t: "Bowl swing", d: 1, sign: 1 },
+    { k: "swing", t: "Swing", d: 1, sign: 1 }, { k: "swing_lo", t: "95% lo", d: 1, sign: 1 }, { k: "swing_hi", t: "95% hi", d: 1, sign: 1 }];
+  const axRows = sel.axes.map(z => ({ ...z }));
+  return `<div class="card"><h1>Selection · which franchise to review</h1>
+    <p class="sub">The choice follows a rule fixed before looking at any one team, and the rule is applied to all ten in the open.</p></div>`
+    + find(`<b>Step 1, the axis.</b> For each phase we correlate every team's change in Impact per match (batting + bowling, 2023 → 2024) with
+      the places it gained in the final table. The <b>${esc(ax.toLowerCase())}</b> tracks the table most closely of the three phases (Spearman ρ = ${f(a.rho, 2)},
+      permutation p = ${f(a.p_perm, 2)}; batting alone ρ = ${f(a.rho_bat, 2)}). Across the whole match the link is stronger still (ρ = ${f(tot.rho, 2)}, p = ${f(tot.p_perm, 3)}).<br>
+      <b>Step 2, the team.</b> ${esc(tname(chRow.team))} moved furthest along that axis: <b>${f(chRow.swing, 1, true)}</b> runs a match
+      [${f(chRow.swing_lo, 1, true)}, ${f(chRow.swing_hi, 1, true)}], of which ${f(chRow.bat_swing, 1, true)} batting and ${f(chRow.bowl_swing, 1, true)} bowling,
+      and went from ${ord(chRow.pos_2023)} to ${ord(chRow.pos_2024)}. The runner-up is ${esc(ru.team)} at ${f(ru.swing, 1, true)}; in ${f(100 * sel.p_chosen_ahead, 0)}% of
+      bootstrap resamples ${esc(chRow.team)}'s swing is the larger.`)
+    + `<div class="card">${facets(panels, { cols: 4, pw: 250, ph: 210, title: "Change in Impact per match against places gained, by phase", xlab: "Impact swing 2023 → 2024, runs a match", ylab: "places gained" })}
+      <div class="note">One dot per team. With ten teams each correlation is descriptive: the permutation p-value is the share of 20,000 random reshuffles of the table that produce a correlation at least as strong.</div></div>
+    <div class="card">${hbar(bars, { title: `${ax} swing, all ten teams, with 95% match-bootstrap intervals`, d: 1, sign: true, ml: 56, w: 820, xlab: "Impact runs a match, 2024 minus 2023" })}</div>
+    <div class="card"><h2>The axis, by phase</h2>${tbl("axes", [{ k: "phase", t: "Phase", l: 1 }, { k: "rho", t: "ρ total", d: 2, sign: 1 },
+      { k: "p_perm", t: "Perm. p", d: 3 }, { k: "rho_bat", t: "ρ batting", d: 2, sign: 1 }, { k: "rho_bowl", t: "ρ bowling", d: 2, sign: 1 }], axRows, { sort: "rho" })}</div>
+    <div class="card"><h2>${esc(ax)} Impact per match, batting and bowling</h2>${tbl("selrows", cols, rows.filter(r => r.phase === ax), { sort: "swing", me: r => r.team === state.team })}</div>`;
+}
+
+function p1a() {
+  const r = one(T.bat_change), ph = ordBy(byTeam(T.bat_change_phase), PHASES, "phase");
+  const all = T.bat_change.slice().sort((a, b) => b.adj_change - a.adj_change).map(x => ({
+    label: x.team, value: x.adj_change, err: [x.adj_lo, x.adj_hi], bold: x.team === state.team,
+    color: x.team === state.team ? "var(--accent)" : "var(--grey)", tipl: `95% ${f(x.adj_lo, 2, true)} to ${f(x.adj_hi, 2, true)}`
+  }));
+  return find(`Raw, ${esc(state.team)} scored <b>${f(r.rpo_2023)}</b> runs off the bat an over in 2023 and <b>${f(r.rpo_2024)}</b> in 2024.
+    Par for their situations rose too, from ${f(r.par_2023)} to ${f(r.par_2024)}, so against par they went from <b>${f(r.rae_po_2023, 2, true)}</b> to
+    <b>${f(r.rae_po_2024, 2, true)}</b> runs an over: a change of <b>${f(r.adj_change, 2, true)}</b> [${f(r.adj_lo, 2, true)}, ${f(r.adj_hi, 2, true)}],
+    ${r.significant ? "which is clear of noise" : "which does not separate from noise"}.`)
+    + `<div class="card"><div class="row2"><div>${legend([{ name: "par for their situations", color: "var(--grey)" }, { name: "runs off the bat", color: "var(--accent)" }])}
+      ${vbars(["2023", "2024"], [{ name: "par", color: "var(--grey)", values: [r.par_2023, r.par_2024] }, { name: "scored", color: "var(--accent)", values: [r.rpo_2023, r.rpo_2024] }], { title: "Batting against par", ylab: "runs per over", labels: true })}</div>
+      <div>${hbar(all, { title: "Change against par, all teams", w: 460, ml: 50, d: 2, sign: true, xlab: "runs per over, 2024 minus 2023" })}</div></div></div>
+    <div class="card"><h2>Where the change happened</h2>${tbl("1a", [{ k: "phase", t: "Phase", l: 1 }, { k: "rpo_2023", t: "RPO 23" }, { k: "rpo_2024", t: "RPO 24" },
+      { k: "raw_change", t: "Raw change", sign: 1 }, { k: "rae_po_2023", t: "vs par 23", sign: 1 }, { k: "rae_po_2024", t: "vs par 24", sign: 1 }, { k: "adj_change", t: "Change vs par", sign: 1 }], ph, { sort: "phase", asc: 1 })}
+    <div class="note">RPO counts runs off the bat per six legal balls. "vs par" is RAE per over: runs scored minus the runs an average batter would have scored against the same bowlers, at the same ground, phase, innings and wickets down.</div></div>`;
+}
+
+function p1b() {
+  const sc = state.season, B = D.meta.set_buckets;
+  const lg = ordBy(T.set_curve.filter(r => r.team === "LEAGUE" && r.season === sc), B, "set_bucket");
+  const tm = ordBy(T.set_curve.filter(r => r.team === state.team && r.season === sc), B, "set_bucket");
+  const all = T.set_player.filter(r => r.team === state.team && r.season === sc);
+  const rs = all.filter(r => r.balls_early + r.balls_settled >= state.minBat);
+  const dots = rs.slice().sort((a, b) => b.early_rate - a.early_rate).slice(0, 14);
+  const first = lg[0] || {}, turn = lg.find(x => x.rate > 0);
+  return find(`Across the league a batter is <b>${f(first.rate, 2, true)}</b> runs a ball against par over his first three balls, and does not score above par
+    until balls <b>${esc(turn ? turn.set_bucket : "–")}</b>. ${esc(state.team)} are at <b>${f((tm[0] || {}).rate, 2, true)}</b> over their first three.
+    A batting order that turns over quickly needs batters who are dangerous immediately.`)
+    + `<div class="card"><div class="row2"><div>${legend([{ name: "league", color: "var(--grey)", line: 1 }, { name: state.team, color: "var(--accent)", line: 1 }])}
+      ${lines(B, [{ name: "league", color: "var(--grey)", values: lg.map(r => r.rate) }, { name: state.team, color: "var(--accent)", values: B.map(k => (tm.find(r => r.set_bucket === k) || {}).rate ?? null) }],
+      { title: "Runs above par per ball, by ball of the innings", ylab: "RAE per ball", xlab: "balls faced so far", d: 3 })}</div>
+      <div>${legend([{ name: "first six balls", color: "var(--accent2)" }, { name: "once set", color: "var(--accent)" }])}
+      ${dotPlot(dots)}</div></div></div>
+    <div class="card"><h2>Time to danger</h2>${tbl("1b", [{ k: "player", t: "Batter", l: 1 }, { k: "balls_early", t: "Balls, first 6", d: 0 },
+      { k: "early_rate", t: "First 6, per ball", d: 3, sign: 1 }, { k: "balls_settled", t: "Balls, set", d: 0 }, { k: "settled_rate", t: "Set, per ball", d: 3, sign: 1 },
+      { k: "cost_of_settling", t: "Cost of settling", d: 2, sign: 1 }], rs, { sort: "early_rate", count: all.length })}
+    <div class="note">Per-ball rates are shrunk towards zero with 60 balls of prior weight, so a short sample cannot top the list by luck. Cost of settling is six times the gap between a batter's set and early rates: the runs his first six balls cost him.</div></div>`;
+}
+function dotPlot(rs) {
+  if (!rs.length) return `<div class="empty">No batter clears the filter.</div>`;
+  const W = 460, ml = 120, mr = 20, mt = 28, rh = 18, H = mt + rs.length * rh + 30;
+  const [lo, hi] = extent(rs.flatMap(r => [r.early_rate, r.settled_rate]), 0.1);
+  const x = lin(lo, hi, ml, W - mr);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="early versus settled" style="max-width:${W}px"><text class="ttl" x="0" y="14">Who is worth watching early</text>`;
+  for (const t of ticks(lo, hi, 4)) s += `<line class="gl" x1="${x(t)}" x2="${x(t)}" y1="${mt - 4}" y2="${H - 28}"/><text class="tick" x="${x(t)}" y="${H - 14}" text-anchor="middle">${tfmt(t)}</text>`;
+  s += `<line class="zl" x1="${x(0)}" x2="${x(0)}" y1="${mt - 4}" y2="${H - 28}"/>`;
+  rs.forEach((r, i) => {
+    const y = mt + i * rh + rh / 2;
+    s += `<text class="lab" x="${ml - 8}" y="${y + 4}" text-anchor="end">${esc(r.player)}</text>`;
+    s += `<line x1="${x(r.early_rate)}" x2="${x(r.settled_rate)}" y1="${y}" y2="${y}" stroke="var(--grey)" stroke-width="2"/>`;
+    for (const [k, c, n] of [["early_rate", "var(--accent2)", "first six"], ["settled_rate", "var(--accent)", "once set"]]) {
+      s += `<circle cx="${x(r[k])}" cy="${y}" r="5" fill="${c}" stroke="var(--surface)" stroke-width="2"/>`;
+      s += `<circle cx="${x(r[k])}" cy="${y}" r="11" fill="transparent" data-tip="${tip(f(r[k], 3, true) + " per ball", r.player + " · " + n)}"/>`;
+    }
+  });
+  return s + `<text class="tick" x="${(ml + W) / 2}" y="${H - 1}" text-anchor="middle">RAE per ball (shrunk)</text></svg>`;
+}
+
+function pbat() {
+  const all = T.player_batting.filter(r => r.team === state.team && r.season === state.season);
+  return { all, rs: all.filter(r => r.legal >= state.minBat) };
+}
+function p1c() {
+  const { all, rs } = pbat();
+  const d = rs.slice().sort((a, b) => b.impact - a.impact).map(r => ({ label: r.player, value: r.impact, note: `${f(r.impact, 1, true)}  (${Math.round(r.runs)} @ ${f(r.sr, 0)})`, tipl: `RAE ${f(r.rae, 1, true)}, DAR ${f(r.dar, 1, true)}` }));
+  const tot = rs.reduce((a, r) => a + (num(r.impact) || 0), 0);
+  const cols = [{ k: "player", t: "Batter", l: 1 }, { k: "inns", t: "Inns", d: 0 }, { k: "balls", t: "Balls", d: 0 }, { k: "runs", t: "Runs", d: 0 },
+    { k: "outs", t: "Outs", d: 0 }, { k: "sr", t: "SR", d: 1 }, { k: "average", t: "Avg", d: 1 }, { k: "bdry_pct", t: "Bdry %", d: 1 },
+    { k: "dot_pct", t: "Dot %", d: 1 }, { k: "control_pct", t: "Control %", d: 1 }, { k: "rae", t: "RAE", d: 1, sign: 1 },
+    { k: "dar", t: "DAR", d: 1, sign: 1 }, { k: "impact", t: "Impact", d: 1, sign: 1 }, { k: "impact_ball", t: "Impact/ball", d: 3, sign: 1 },
+    { k: "pct_impact", t: "League pctile", d: 0 }];
+  return find(`Over ${state.season === "both" ? "both seasons" : state.season}, the ${rs.length} ${esc(state.team)} batters above the filter are worth
+    <b>${f(tot, 0, true)} runs</b> of batting Impact between them. Impact is RAE (runs above what an average batter would have scored, ball by ball)
+    minus DAR (what his dismissals cost beyond an average batter's in the same situations).`)
+    + `<div class="card">${d.length ? hbar(d, { title: "Batting Impact, runs above an average batter", d: 1, sign: true, ml: 140, w: 820 }) : `<div class="empty">No batter clears the filter.</div>`}</div>
+    <div class="card"><h2>Full batting record</h2>${tbl("1c", cols, rs, { sort: "impact", count: all.length })}
+    <div class="note">DAR is positive when a batter's dismissals cost more than expected, so it is subtracted. League percentile ranks shrunk Impact per ball among qualifying batters (${D.model.hyper.min_balls_bat}+ legal balls).</div></div>`;
+}
+
+function p2a() {
+  const r = one(T.bowl_change), ph = ordBy(byTeam(T.bowl_change_phase), PHASES, "phase");
+  const all = T.bowl_change.slice().sort((a, b) => b.change - a.change).map(x => ({
+    label: x.team, value: x.change, err: [x.change_lo, x.change_hi], bold: x.team === state.team,
+    color: x.team === state.team ? "var(--accent)" : "var(--grey)", tipl: `95% ${f(x.change_lo, 2, true)} to ${f(x.change_hi, 2, true)}`
+  }));
+  return find(`${esc(state.team)} conceded <b>${f(r.economy_2023)}</b> an over in 2023 and <b>${f(r.economy_2024)}</b> in 2024. Against par (runs off the bat an average
+    attack would have conceded to the same batters in the same situations) they saved <b>${f(r.saved_po_2023, 2, true)}</b> and then <b>${f(r.saved_po_2024, 2, true)}</b>
+    runs an over: ${r.change >= 0 ? "better" : "worse"} by <b>${f(Math.abs(r.change), 2)}</b> [${f(r.change_lo, 2, true)}, ${f(r.change_hi, 2, true)}],
+    ${r.significant ? "clear of noise" : "within noise"}.`)
+    + `<div class="card"><div class="row2"><div>${legend([{ name: "runs saved per over vs par", color: "var(--accent)" }])}
+      ${vbars(PHASES, [{ name: "2023", color: "var(--grey)", values: ph.map(x => x.saved_po_2023) }, { name: "2024", color: "var(--accent)", values: ph.map(x => x.saved_po_2024) }], { title: "Runs saved per over, by phase (grey 2023, blue 2024)", ylab: "runs saved per over", labels: true, sign: true })}</div>
+      <div>${hbar(all, { title: "Change in runs saved per over, all teams", w: 460, ml: 50, d: 2, sign: true, xlab: "2024 minus 2023 (positive = improved)" })}</div></div></div>
+    <div class="card"><h2>By phase</h2>${tbl("2a", [{ k: "phase", t: "Phase", l: 1 }, { k: "economy_2023", t: "Econ 23" }, { k: "economy_2024", t: "Econ 24" },
+      { k: "saved_po_2023", t: "Saved/over 23", sign: 1 }, { k: "saved_po_2024", t: "Saved/over 24", sign: 1 }, { k: "change", t: "Change", sign: 1 }], ph, { sort: "phase", asc: 1 })}
+    <div class="note">Economy includes wides and no-balls. Runs saved uses runs off the bat on legal balls, the quantity the expectation model prices.</div></div>`;
+}
+
+function p2b() {
+  const rs = ordBy(T.spin_pace.filter(r => r.team === state.team && r.season === state.season && r.phase !== "All"), PHASES, "phase");
+  const all = T.spin_pace.find(r => r.team === state.team && r.season === state.season && r.phase === "All") || {};
+  const better = num(all.spin_saved_po) > num(all.pace_saved_po) ? "spin" : "pace";
+  return find(`${esc(state.team)} bowl <b>${f(all.spin_share, 1)}%</b> spin against a league ${f(all.league_spin_share, 1)}% (${state.season === "both" ? "both seasons" : state.season}).
+    Their <b>${better}</b> is the better card: spin saves ${f(all.spin_saved_po, 2, true)} and pace ${f(all.pace_saved_po, 2, true)} runs an over against par
+    (economy ${f(all.spin_economy)} and ${f(all.pace_economy)}).`)
+    + `<div class="card"><div class="row2"><div>${legend([{ name: state.team, color: "var(--accent)" }, { name: "league", color: "var(--grey)" }])}
+      ${vbars(PHASES, [{ name: state.team, color: "var(--accent)", values: rs.map(r => r.spin_share) }, { name: "league", color: "var(--grey)", values: rs.map(r => r.league_spin_share) }], { title: "Share of balls bowled by spin", ylab: "% of legal balls", d: 0, labels: true })}</div>
+      <div>${legend([{ name: "pace", color: "var(--accent2)" }, { name: "spin", color: "var(--accent)" }])}
+      ${vbars(PHASES, [{ name: "pace", color: "var(--accent2)", values: rs.map(r => r.pace_saved_po) }, { name: "spin", color: "var(--accent)", values: rs.map(r => r.spin_saved_po) }], { title: "Which works: runs saved per over vs par", ylab: "runs saved per over", labels: true, sign: true })}</div></div></div>
+    <div class="card"><h2>Balance detail</h2>${tbl("2b", [{ k: "phase", t: "Phase", l: 1 }, { k: "balls", t: "Balls", d: 0 }, { k: "spin_share", t: "Spin %", d: 1 },
+      { k: "league_spin_share", t: "League %", d: 1 }, { k: "spin_economy", t: "Spin econ" }, { k: "pace_economy", t: "Pace econ" },
+      { k: "spin_saved_po", t: "Spin saved/over", sign: 1 }, { k: "pace_saved_po", t: "Pace saved/over", sign: 1 }, { k: "spin_wkts", t: "Spin wkts", d: 0 }, { k: "pace_wkts", t: "Pace wkts", d: 0 }], rs, { sort: "phase", asc: 1 })}
+    <div class="note">Season selector applies. Bowlers are classed by the five sub-types of the model; a mixed style code is resolved by the bowler's recorded type.</div></div>`;
+}
+
+function p2c() {
+  const all = T.player_bowling.filter(r => r.team === state.team && r.season === state.season);
+  const rs = all.filter(r => r.legal >= state.minBowl);
+  const d = rs.slice().sort((a, b) => b.impact - a.impact).map(r => ({ label: r.player, value: r.impact, note: `${f(r.impact, 1, true)}  (${r.wickets} wkts @ ${f(r.economy, 2)})`, tipl: `runs saved ${f(r.rae_saved, 1, true)}, DAR ${f(r.dar, 1, true)}` }));
+  const tot = rs.reduce((a, r) => a + (num(r.impact) || 0), 0);
+  const cols = [{ k: "player", t: "Bowler", l: 1 }, { k: "kind", t: "Type", l: 1 }, { k: "overs", t: "Overs", d: 1 }, { k: "conceded", t: "Runs", d: 0 },
+    { k: "wickets", t: "Wkts", d: 0 }, { k: "economy", t: "Econ" }, { k: "bowl_avg", t: "Avg", d: 1 }, { k: "bowl_sr", t: "SR", d: 1 },
+    { k: "dot_pct", t: "Dot %", d: 1 }, { k: "rae_saved", t: "Runs saved", d: 1, sign: 1 }, { k: "dar", t: "DAR", d: 1, sign: 1 },
+    { k: "impact", t: "Impact", d: 1, sign: 1 }, { k: "impact_ball", t: "Impact/ball", d: 3, sign: 1 }, { k: "pct_impact", t: "League pctile", d: 0 }];
+  return find(`Over ${state.season === "both" ? "both seasons" : state.season}, the ${rs.length} ${esc(state.team)} bowlers above the filter are worth
+    <b>${f(tot, 0, true)} runs</b> of bowling Impact: runs saved against an average bowler in the same situations, plus wickets worth more than the expected haul.`)
+    + `<div class="card">${d.length ? hbar(d, { title: "Bowling Impact, runs above an average bowler", d: 1, sign: true, ml: 150, w: 820 }) : `<div class="empty">No bowler clears the filter.</div>`}</div>
+    <div class="card"><h2>Full bowling record</h2>${tbl("2c", cols, rs, { sort: "impact", count: all.length })}
+    <div class="note">For a bowler DAR is added: wickets beyond the expected number, priced by what each dismissal cost the batting side. A high-volume containing bowler who takes exactly the expected wickets gets no wicket credit.</div></div>`;
+}
+
+function p2d() {
+  const cells = T.length_cells.filter(r => r.team === state.team && r.season === state.season);
+  const pretty = s => String(s).replace(/_/g, " ").toLowerCase().replace("short of a good length", "back of a length");
+  const panels = PHASES.map(p => ({
+    name: p, pts: cells.filter(r => r.phase === p && r.reliable).map(r => ({
+      x: r.share_gap, y: r.dev, label: pretty(r.length), r: Math.max(4.5, Math.min(10, Math.sqrt(r.balls) / 2.2)),
+      color: (r.share_gap > 0 && r.dev < 0) ? "var(--neg)" : "var(--accent)",
+      tip: tip(`${f(r.dev, 3, true)} runs a ball vs league`, `${pretty(r.length)} · ${p} · ${r.balls} balls · ${f(r.share, 1)}% of the phase`)
+    }))
+  }));
+  const death = cells.filter(r => r.phase === "Death" && r.reliable);
+  const best = death.slice().sort((a, b) => b.z - a.z)[0], worst = death.slice().sort((a, b) => a.z - b.z)[0];
+  return find(best ? `At the death (cells of 40+ balls, ranked by z, the gap over its standard error) ${esc(state.team)}'s strongest length against the league is <b>${pretty(best.length)}</b>
+    (${f(best.dev, 3, true)} runs a ball, z = ${f(best.z, 1, true)}, ${f(best.share, 1)}% of their death balls against a league ${f(best.share_lg, 1)}%) and their weakest is
+    <b>${pretty(worst.length)}</b> (${f(worst.dev, 3, true)}, z = ${f(worst.z, 1, true)}, ${f(worst.share, 1)}% against ${f(worst.share_lg, 1)}%).` : "Not enough death balls in this season.")
+    + `<div class="card">${legend([{ name: "bowled more than the league and worse at it", color: "var(--neg)" }, { name: "any other length", color: "var(--accent)" }])}
+      ${facets(panels, { cols: 3, pw: 280, ph: 220, title: "Length selection against length execution", xlab: "bowled more (+) or less (−) than the league, percentage points", ylab: "runs saved per ball vs league" })}
+      <div class="note">Selection (x) is a choice, execution (y) a skill, so they are kept as separate numbers. Only cells with 40+ balls are plotted; the table has all of them, with z = gap ÷ standard error.</div></div>
+    <div class="card"><h2>Length by length</h2>${tbl("2d", [{ k: "phase", t: "Phase", l: 1 }, { k: "length", t: "Length", l: 1, fmt: v => esc(pretty(v)) }, { k: "balls", t: "Balls", d: 0 },
+      { k: "share", t: "Their %", d: 1 }, { k: "share_lg", t: "League %", d: 1 }, { k: "share_gap", t: "Selection gap", d: 1, sign: 1 },
+      { k: "saved", t: "Saved/ball", d: 3, sign: 1 }, { k: "saved_lg", t: "League", d: 3, sign: 1 }, { k: "dev", t: "Execution gap", d: 3, sign: 1 }, { k: "z", t: "z", d: 1, sign: 1 }], cells, { sort: "dev" })}</div>`;
+}
+
+/* ------------------------------------------------------------ method */
+function mMethod() {
+  const M = D.model, w = M.worked, H = M.hyper;
+  const fac = M.factors.map(r => ({ ...r, dev: (M.deviance.find(d => d.factor === r.factor) || {}) }))
+    .map(r => ({ factor: r.factor, cells: r.cells, range: `${f(r.min, 3)} – ${f(r.max, 3)}`, kappa: r.kappa, dd: r.dev.delta_deviance, df: r.dev.df, p: r.dev.p }));
+  const scen = PHASES.map((p, i) => ({ i, phase: p, i1: (M.scenario.find(r => r.phase === p && r.inns == 1) || {}).multiplier, i2: (M.scenario.find(r => r.phase === p && r.inns == 2) || {}).multiplier,
+    y23: (M.era.find(r => r.phase === p && r.season == 2023) || {}).multiplier, y24: (M.era.find(r => r.phase === p && r.season == 2024) || {}).multiplier }));
+  const wk = PHASES.map((p, i) => { const o = { i, phase: p }; for (let k = 0; k <= 9; k++) { const c = M.wicket.find(r => r.phase === p && r.wkts === k); o["w" + k] = c ? c.multiplier : null; } return o; });
+  const subs = [...new Set(M.bowltype.map(r => r.sub))];
+  const bt = subs.map(s => { const o = { sub: s }; PHASES.forEach(p => { const c = M.bowltype.find(r => r.sub === s && r.phase === p); o[p] = c ? c.multiplier : null; }); return o; });
+  const vc = M.value_curve.filter(r => r.innings === 1);
+  const vcats = [...new Set(vc.map(r => r.balls_left))].sort((a, b) => b - a);
+  const vseries = [10, 6, 2].map((wh, i) => ({ name: `${wh} wickets in hand`, color: ["var(--accent)", "var(--accent2)", "var(--grey)"][i], values: vcats.map(m => (vc.find(r => r.balls_left === m && r.wkts_in_hand === wh) || {}).runs) }));
+  const wc = M.wicket_cost.filter(r => r.inns === 1);
+  const overs = [...Array(20).keys()].map(i => i + 1);
+  const wcs = [0, 2, 4, 6].map((k, i) => ({ name: `${k} down`, color: ["var(--accent)", "var(--accent2)", "var(--ink2)", "var(--grey)"][i], values: overs.map(o => { const c = wc.find(r => r.over === o && r.wkts_before === k); return c && (c.n ?? 99) >= 40 ? c.wcost : null; }) }));
+  const hb = M.hbar;
+  const hbRows = PHASES.map((p, i) => ({ i, phase: p, b1: (hb.find(r => r.phase === p && r.inns == 1) || {})["batter (any dismissal)"], b2: (hb.find(r => r.phase === p && r.inns == 2) || {})["batter (any dismissal)"],
+    w1: (hb.find(r => r.phase === p && r.inns == 1) || {})["bowler (credited wickets)"], w2: (hb.find(r => r.phase === p && r.inns == 2) || {})["bowler (credited wickets)"] }));
+  const sel = D.selection;
+  return `<div class="card prose"><h1>How every number is made</h1>
+    <p class="sub">The framework is Bandyopadhyay, <i>Context-adjusted Player Evaluation for Twenty20 Cricket</i> (arXiv), re-estimated here from scratch on the
+    ${D.meta.legal_balls.toLocaleString()} legal deliveries of IPL 2023–24. Everything on this page is read from the notebook's output.</p></div>
+
+  <div class="card prose"><h2>1 · Runs Above Expected (RAE)<span class="tag">the run ledger</span></h2>
+    <p>A run means different things in different places. A strike rate of 150 is ordinary at the death and exceptional in the middle overs; a boundary
+    off Bumrah is worth more than the same shot off a part-timer. RAE removes the situation from every ball. For each legal delivery the model asks
+    <b>how many runs off the bat an average batter would score here</b>, and credits the batter with the difference.</p>
+    <div class="eq">expected μ(x) = μ₀ × γ(phase, innings) × γ(year, phase) × γ(phase, wickets down) × γ(phase, bowler sub-type) × γ(ground) × γ(opponent)
+RAE = runs off the bat − μ(x)</div>
+    <p>The base rate on this sample is <b>μ₀ = ${f(M.mu0, 4)}</b> runs per legal ball. Each multiplier is fitted by <b>backfitting</b>: take the factor's cell,
+    divide the runs actually scored there by the runs the other factors already expect, and that ratio is the multiplier. The ratio is exactly the
+    maximum-likelihood estimate of a Poisson rate with the other factors as an offset, so each pass is one step up a concave likelihood, and repeating
+    the passes converges to the single best set of multipliers.</p>
+    <p>Two fits share the same context and differ only in the opposition. The <b>batting</b> fit multiplies the expectation by the quality of the bowler
+    faced, so scoring off a good bowler earns more. The <b>bowling</b> fit multiplies by the quality of the batter bowled to, so containing a good batter earns more.
+    A player's own multiplier never touches his own residual.</p>
+    <h3>Shrinkage: trusting a cell only as far as its sample</h3>
+    <p>A ground with one match, or a bowler with twenty balls, gives an unstable ratio. Each raw multiplier is pulled towards 1 by a pseudo-count κ:
+    <span style="font-family:ui-monospace,monospace">γ = (n·γ̂ + κ) / (n + κ)</span>. κ is not chosen, it is <b>estimated per factor</b> as the ratio of noise to signal:
+    run variance (${f(M.var_r, 3)}; runs are over-dispersed, ${f(M.dispersion, 2)}× a Poisson) over the between-cell variance recovered by the DerSimonian–Laird
+    method of moments. A factor with a weak real effect gets a large κ and is pulled hard to 1; a strong one is left close to its data.
+    A cell holding exactly κ balls sits halfway between its own ratio and neutral.</p>
+    ${tbl("fac", [{ k: "factor", t: "Factor", l: 1 }, { k: "cells", t: "Cells", d: 0 }, { k: "range", t: "Multiplier range", l: 1 }, { k: "kappa", t: "κ (balls)", d: 0 },
+      { k: "dd", t: "Δ deviance", d: 1 }, { k: "df", t: "d.f.", d: 0 }, { k: "p", t: "p", d: 4 }], fac, { sort: "dd" })}
+    <div class="note">Δ deviance is the rise in Poisson deviance when the factor is dropped and the rest refitted: the analysis of deviance that shows each factor earns its place.
+    The opposition-batter factor belongs to the bowling fit, so it has no row in the batting-fit deviance table.</div>
+    <div class="row2" style="margin-top:12px"><div><h3>Phase × innings, and year × phase</h3>${tbl("scen", [{ k: "phase", t: "Phase", l: 1 }, { k: "i1", t: "Innings 1", d: 3 }, { k: "i2", t: "Innings 2", d: 3 },
+      { k: "y23", t: "2023", d: 3 }, { k: "y24", t: "2024", d: 3 }], scen, { sort: "i", asc: 1 })}
+      <div class="note">Values above 1 raise the bar. The year factor shows 2024 scoring above 2023 in every phase, the first full season of the Impact Player rule: a run in 2024 is measured against a higher bar.</div></div>
+      <div><h3>Bowler sub-type × phase</h3>${tbl("bt", [{ k: "sub", t: "Sub-type", l: 1 }, ...PHASES.map(p => ({ k: p, t: p, d: 3 }))], bt, { sort: "sub", asc: 1 })}</div></div>
+    <h3>Wickets down × phase</h3>${tbl("wk", [{ k: "phase", t: "Phase", l: 1 }, ...[...Array(10).keys()].map(k => ({ k: "w" + k, t: String(k), d: 3 }))], wk, { sort: "i", asc: 1 })}
+    <div class="note">Scoring falls as wickets go in the middle overs; at the death one or two down scores <i>above</i> none, because sides accelerate once a set batter falls.
+    Thin cells (seven or more down) are pulled towards 1 by the shrinkage, which is why tail-end batting shows as negative RAE rather than being absorbed into a steep multiplier.</div>
+    <h3>A worked delivery</h3>
+    <p>${esc(w.date)}, ${esc(w.ground)}. Over ${w.over}.${w.ball}, innings ${w.innings}, ${esc(w.phase.toLowerCase())} overs, ${w.wkts_down} down. ${esc(w.batter)} (${esc(w.team)}) faces
+    ${esc(w.bowler)} (${esc(w.sub.toLowerCase())}). With seven down, against that bowler, an average batter scores <b>${f(w.expected, 3)}</b> runs here.
+    ${esc(w.batter)} hit ${w.runs}, so <b>RAE = ${w.runs} − ${f(w.expected, 3)} = ${f(w.rae, 3, true)}</b>, the largest single-ball RAE in the two seasons.</p></div>
+
+  <div class="card prose"><h2>2 · Dismissal Adjusted Runs (DAR)<span class="tag">the wicket ledger</span></h2>
+    <p>RAE prices runs. A wicket carries a second kind of value: the dismissed batter takes the rest of his innings with him. DAR prices that
+    in the same currency, runs, using a <b>value function</b>: the runs a batting side can expect to add from any state of its innings.</p>
+    <div class="eq">V(m, w, i, j) = h · V(m−1, w−1, ι(w), j) + (1 − h) · Σᵣ π(r) · [ r + V(m−1, w, i′, j′) ]
+wicket cost c(s) = [ V(m, w, i, j) − V(m−1, w−1, ι(w), j) + δ_fresh ]₊</div>
+    <p>A state is <i>m</i> balls left, <i>w</i> wickets in hand, a striker of quality tier <i>i</i> and a partner of tier <i>j</i>. On each ball the striker is out with
+    hazard <i>h</i>, otherwise he scores <i>r</i> with probability π(r); odd runs and the end of an over swap the ends. Batters are grouped into ${H.tiers} tiers of equal
+    ball share by their shrunk scoring rate, and the hazard and scoring distribution are estimated per tier, phase and innings (pooled towards the phase average by
+    ${H.kappa_eta} and ${H.kappa_pi} balls of prior weight). One backward sweep from the last ball solves the whole table; there is nothing to optimise.
+    The data name only the striker, so the notebook rebuilds who was at the other end from the order batters appear and are dismissed.</p>
+    <p><b>Check against reality:</b> from the first ball of an innings with average openers, the value function expects <b>${f(M.v_start, 1)}</b> runs off the bat;
+    full first innings in the data averaged <b>${f(M.first_inns_actual, 1)}</b>.</p>
+    <div class="row2"><div>${legend(vseries.map(s => ({ name: s.name, color: s.color, line: 1 })))}${lines(vcats.map(String), vseries, { title: "Runs still to come, first innings", xlab: "balls left", ylab: "expected runs off the bat", d: 1 })}</div>
+      <div>${legend(wcs.map(s => ({ name: s.name, color: s.color, line: 1 })))}${lines(overs.map(String), wcs, { title: "What a wicket costs, by over (first innings)", xlab: "over", ylab: "runs forgone", d: 2 })}</div></div>
+    <p style="margin-top:10px">The wicket cost is the drop in expected runs when this striker is replaced by the next batter in (the average tier at that batting position),
+    plus a small freshness term δ for the runs a new batter gives up while he settles. A top-order wicket in the powerplay forgoes many runs; a tail-ender in the last over, almost none.</p>
+    <h3>Centring: charging only what is beyond average</h3>
+    <p>Getting out is the expected end of every innings, so charging each dismissal in full would punish even an average batter and flatter every bowler.
+    DAR compares the realised cost with the cost an average player would have incurred over the same balls, at the league dismissal rate h̄ for that phase and innings:</p>
+    <div class="eq">DAR = Σ ( W − h̄ ) · c(s)      W = 1 on the ball the player was dismissed (batter) or took a wicket (bowler)</div>
+    ${tbl("hb", [{ k: "phase", t: "Phase", l: 1 }, { k: "b1", t: "Batter h̄, inns 1", d: 4 }, { k: "b2", t: "inns 2", d: 4 }, { k: "w1", t: "Bowler h̄, inns 1", d: 4 }, { k: "w2", t: "inns 2", d: 4 }], hbRows, { sort: "i", asc: 1 })}
+    <div class="note">The batter's rate counts any dismissal of the striker; the bowler's counts only wickets credited to the bowler (not run outs), so each role is centred on its own events.
+    Summed over the league, batting DAR is ${f(M.dar_offset_bat, 0, true)} runs against ${f(M.realised_wicket_value, 0)} runs of realised wicket value (about ${f(M.dar_offset_bat / D.meta.legal_balls, 3, true)} a ball):
+    wickets cluster in cheap states (late in the death, tail-enders), which a rate conditioned only on phase and innings does not see. The offset is common to every team, so comparisons between teams are unaffected.</div></div>
+
+  <div class="card prose"><h2>3 · Impact<span class="tag">one scale for both roles</span></h2>
+    <div class="eq">Batting Impact = Σ RAE − DAR          Bowling Impact = − Σ RAE + DAR</div>
+    <p>Both are sums of residuals centred on an average performer, measured in runs, so <b>+50 means the same fifty runs whichever role produced it</b>. A batter who scores
+    above par and survives longer than the league rate is rewarded twice; one who occupies the crease slowly earns a survival credit but gives it back in weak RAE.
+    A bowler who contains gets RAE credit; one who also takes more wickets than his overs would ordinarily yield gets DAR credit on top. Impact is read as a total
+    (how much value) or per ball (how good per ball); both appear in the player tables.</p></div>
+
+  <div class="card prose"><h2>4 · Team rates, uncertainty and selection</h2>
+    <p><b>Team rates.</b> A team's "runs per over against par" is six times its summed RAE divided by its legal balls. Impact per match divides a season's Impact by the matches the team played.</p>
+    <p><b>Intervals.</b> Every team change carries a 95% interval from a <b>match-clustered bootstrap</b>: the team's matches are resampled whole, ${H.boot_b.toLocaleString()} times
+    (seed ${H.seed}), because balls within a match are not independent. A change whose interval crosses zero is reported as within noise.</p>
+    <p><b>Selection.</b> The franchise under review is not chosen by taste. Step one finds the phase whose 2023 → 2024 change in Impact per match best tracks the places each team gained
+    (Spearman ρ, with a permutation p-value because ten teams is a small sample). Step two takes the team that moved furthest along that phase. On these data the axis is the
+    <b>${esc(sel.axis.toLowerCase())}</b> and the team is <b>${esc(tname(sel.chosen))}</b>; the runner-up, ${esc(sel.runner_up)}, is named on the same chart.</p>
+    <p><b>Qualification.</b> Player tables default to ${H.min_balls_bat}+ legal balls for batters and ${H.min_balls_bowl}+ for bowlers; the filters in the header change this.
+    Per-ball rates used for ranking are shrunk with ${H.kappa_mu} balls of prior weight.</p></div>
+
+  <div class="card prose"><h2>What this cannot see</h2>
+    <p>No fielder is ever named, so a dropped catch is charged to nobody and a great catch credits the bowler. The non-striker is rebuilt, not recorded.
+    The expectation model treats line and length as the bowler's business: this dataset has ball tracking on 99.8% of balls, and a line-and-length extension exists
+    (the paper's mRAE), but it is kept out of these numbers so batting and bowling stay on one definition. Two seasons are a short record: every team change carries its interval for that reason.</p></div>`;
+}
+
+function mData() {
+  const cols = [{ k: "family", t: "Group", l: 1 }, { k: "column", t: "Column", l: 1 }, { k: "dtype", t: "Type", l: 1 }, { k: "non_null_pct", t: "Filled %", d: 1 },
+    { k: "n_unique", t: "Distinct", d: 0 }, { k: "min", t: "Min", d: 2 }, { k: "max", t: "Max", d: 2 }, { k: "examples", t: "Examples", l: 1 }];
+  return `<div class="card"><h1>Data and cleaning</h1><p class="sub">The organisers' file: ${D.meta.deliveries.toLocaleString()} deliveries, 61 columns, IPL ${D.meta.seasons.join(" and ")}.
+    Built ${esc(D.meta.built)} on ${esc(D.meta.platform)} (pandas ${esc(D.meta.versions.pandas)}).</p></div>
+    <div class="card"><h2>What the checks found</h2>${tbl("eda", [{ k: "check", t: "Check", l: 1 }, { k: "result", t: "Finding", l: 1, wrap: 1 }, { k: "action", t: "Action", l: 1, wrap: 1 }], D.eda.map((r, i) => ({ ...r, i })), { sort: "i", asc: 1 })}</div>
+    <div class="card"><h2>Cleaning log</h2>${tbl("log", [{ k: "i", t: "#", d: 0 }, { k: "step", t: "Step", l: 1 }, { k: "detail", t: "What was done", l: 1, wrap: 1 }, { k: "rows", t: "Rows", d: 0 }], D.cleaning_log.map((r, i) => ({ ...r, i: i + 1 })), { sort: "i", asc: 1 })}</div>
+    <div class="card"><h2>Validation</h2>${tbl("chk", [{ k: "check", t: "Recomputed a second way", l: 1 }, { k: "pipeline", t: "Pipeline", d: 4 }, { k: "independent", t: "Independent", d: 4 }, { k: "ok", t: "Pass", l: 1 }], D.checks.map((r, i) => ({ ...r, i })), { sort: "i", asc: 1 })}
+      <div class="note">The notebook refuses to write this file if any check fails.</div></div>
+    <div class="card"><h2>Every column</h2>${tbl("cols", cols, D.column_profile.map((r, i) => ({ ...r, i })), { sort: "i", asc: 1 })}</div>`;
+}
+
+/* ------------------------------------------------------------ shell */
+const QS = [
+  { id: "ov", g: "", n: "", t: "Overview", r: ovPanel },
+  { id: "sel", g: "", n: "", t: "Selection", r: selPanel },
+  { id: "1a", g: "Batting", n: "1a", t: "What changed, 2023 → 2024", r: p1a },
+  { id: "1b", g: "Batting", n: "1b", t: "Arrival: how fast batters start", r: p1b, s: 1 },
+  { id: "1c", g: "Batting", n: "1c", t: "Most impactful batters", r: p1c, s: 1 },
+  { id: "2a", g: "Bowling", n: "2a", t: "What changed, 2023 → 2024", r: p2a },
+  { id: "2b", g: "Bowling", n: "2b", t: "Spin and pace", r: p2b, s: 1 },
+  { id: "2c", g: "Bowling", n: "2c", t: "Most impactful bowlers", r: p2c, s: 1 },
+  { id: "2d", g: "Bowling", n: "2d", t: "Length selection and execution", r: p2d, s: 1 },
+  { id: "m1", g: "Method", n: "M1", t: "How the metrics work", r: mMethod, all: 1 },
+  { id: "m2", g: "Method", n: "M2", t: "Data and cleaning", r: mData, all: 1 },
+];
+function draw() {
+  const q = QS.find(x => x.id === state.q) || QS[0];
+  document.getElementById("season").disabled = !q.s;
+  document.querySelectorAll("#teams button").forEach(b => b.classList.toggle("on", b.dataset.t === state.team));
+  document.getElementById("nav").innerHTML = ["", "Batting", "Bowling", "Method"].map(g => (g ? `<div class="grp">${g}</div>` : "") +
+    QS.filter(x => x.g === g).map(x => `<a data-q="${x.id}" class="${x.id === state.q ? "on" : ""}"><b>${x.n}</b>${esc(x.t)}</a>`).join("")).join("");
+  const head = (q.id === "ov" || q.all || q.id === "sel") ? "" : `<div class="card" style="padding:12px 18px"><h1>${esc(q.n)} · ${esc(q.t)}</h1>
+    <p class="sub">${esc(tname(state.team))}${q.s ? " · " + (state.season === "both" ? "both seasons" : state.season) : " · 2023 and 2024"}</p></div>`;
+  document.getElementById("view").innerHTML = head + q.r();
+  const hh = `#q=${state.q}&t=${state.team}`;
+  if (location.hash !== hh) try { history.replaceState(null, "", hh); } catch (e) { }
+}
+function boot(data) {
+  D = data; T = data; TEAMS = Object.keys(D.teams);
+  state.team = D.selection.chosen;
+  readHash();
+  state.minBat = D.model.hyper.min_balls_bat; state.minBowl = D.model.hyper.min_balls_bowl;
+  document.getElementById("minBat").value = state.minBat; document.getElementById("minBowl").value = state.minBowl;
+  document.getElementById("brandsub").textContent = `IPL 2023 + 2024 · RAE / DAR / Impact · built ${D.meta.built}`;
+  document.getElementById("teams").innerHTML = TEAMS.map(t => `<button data-t="${t}" title="${esc(tname(t))}">${t}</button>`).join("");
+  draw();
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("#teams button"); if (b) { state.team = b.dataset.t; draw(); return; }
+  const a = e.target.closest("nav a"); if (a) { state.q = a.dataset.q; draw(); window.scrollTo(0, 0); return; }
+  const g = e.target.closest("[data-go]"); if (g) { e.preventDefault(); state.q = g.dataset.go; draw(); window.scrollTo(0, 0); return; }
+  const th = e.target.closest("th[data-k]");
+  if (th) { const id = th.dataset.t, k = th.dataset.k, cur = state.sort[id]; state.sort[id] = { k, d: cur && cur.k === k ? -cur.d : -1 }; draw(); }
+});
+addEventListener("hashchange", () => { if (D) { readHash(); draw(); } });
+["season", "minBat", "minBowl"].forEach(id => document.getElementById(id).addEventListener("change", e => {
+  state[id] = id === "season" ? e.target.value : Math.max(0, +e.target.value || 0); draw();
+}));
+document.getElementById("theme").addEventListener("click", () => {
+  const r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark ? "light" : "dark";
+});
+
+/* tooltips: bars, dots, cells carry data-tip ("value|label"); line charts get a crosshair */
+const TIP = document.getElementById("tip");
+function showTip(x, y, rowsArr) {
+  TIP.replaceChildren(...rowsArr.map(([v, l]) => { const d = document.createElement("div"); const s = document.createElement("span"); s.className = "tv"; s.textContent = v; const t = document.createElement("span"); t.className = "tl"; t.textContent = l ? "  " + l : ""; d.append(s, t); return d; }));
+  TIP.style.display = "block";
+  const w = TIP.offsetWidth, h = TIP.offsetHeight;
+  TIP.style.left = Math.min(x + 14, innerWidth - w - 8) + "px"; TIP.style.top = Math.max(8, y - h - 10) + "px";
+}
+document.addEventListener("pointermove", e => {
+  const t = e.target.closest("[data-tip]");
+  if (t && t.dataset.tip) { const [v, l] = t.dataset.tip.split("|"); showTip(e.clientX, e.clientY, [[v, l]]); return; }
+  const hr = e.target.closest("rect.xhit");
+  document.querySelectorAll("line.xh").forEach(l => l.style.display = "none");
+  if (hr) {
+    const P = JSON.parse(hr.dataset.lines), svg = hr.ownerSVGElement, bb = svg.getBoundingClientRect();
+    const vw = +hr.dataset.vw, sx = (e.clientX - bb.left) * vw / bb.width, ml = +hr.dataset.ml, w = +hr.dataset.w;
+    const i = Math.max(0, Math.min(P.cats.length - 1, Math.round((sx - ml) / w * (P.cats.length - 1))));
+    const xx = ml + w * (P.cats.length === 1 ? .5 : i / (P.cats.length - 1));
+    const xh = svg.querySelector("line.xh"); xh.setAttribute("x1", xx); xh.setAttribute("x2", xx); xh.style.display = "block";
+    showTip(e.clientX, e.clientY, [[String(P.cats[i]), ""], ...P.series.map(s => [s.v[i] == null ? "–" : (+s.v[i]).toFixed(P.d), s.n])]);
+    return;
+  }
+  TIP.style.display = "none";
+});
+
+/* data: fetched from the repository; a local file can be dropped in if fetch is blocked (file://) */
+fetch("data/dashboard_data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(boot).catch(err => {
+  document.getElementById("view").innerHTML = `<div class="card"><h1>Data not loaded</h1><p class="sub">Could not fetch <code>data/dashboard_data.json</code> (${esc(err.message)}).
+    On GitHub Pages this loads automatically. Opened as a local file, the browser blocks it: choose the file the Kaggle notebook wrote instead.</p>
+    <p><input type="file" id="pick" accept=".json"></p></div>`;
+  document.getElementById("pick").addEventListener("change", ev => { const fr = new FileReader(); fr.onload = () => boot(JSON.parse(fr.result)); fr.readAsText(ev.target.files[0]); });
+});
+</script>
+</body>
+</html>
