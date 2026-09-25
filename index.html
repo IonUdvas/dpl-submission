@@ -777,7 +777,7 @@ document.addEventListener("pointermove", e => {
 });
 
 /* data: fetched from the repository; a local file can be dropped in if fetch is blocked (file://) */
-fetch("data/dashboard_data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(boot).catch(err => {
+fetch("dashboard_data.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(boot).catch(err => {
   document.getElementById("view").innerHTML = `<div class="card"><h1>Data not loaded</h1><p class="sub">Could not fetch <code>data/dashboard_data.json</code> (${esc(err.message)}).
     On GitHub Pages this loads automatically. Opened as a local file, the browser blocks it: choose the file the Kaggle notebook wrote instead.</p>
     <p><input type="file" id="pick" accept=".json"></p></div>`;
